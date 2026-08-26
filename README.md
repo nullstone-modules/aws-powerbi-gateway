@@ -16,7 +16,7 @@ The network must provide NAT egress; the gateway requires an always-on outbound 
 
 Unattended: set `tenant_id`, `application_id`, `client_secret`, and `recovery_key` — the gateway registers itself at first boot using a Microsoft Entra service principal. Secrets are stored in AWS Secrets Manager and loaded by the init script, never embedded in user data. If any of the four is blank, registration is skipped.
 
-Manual: RDP in via SSM port forwarding using the `admin_username`/`admin_password` outputs and register interactively.
+Manual: RDP in via SSM port forwarding using the `admin_username`/`admin_password` outputs, run the staged installer at `C:\ProgramData\nullstone\GatewayInstall.exe`, and register interactively.
 
 Keep the recovery key — it is required to restore the gateway or add cluster members.
 

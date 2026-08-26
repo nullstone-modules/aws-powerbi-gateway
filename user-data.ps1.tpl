@@ -32,15 +32,19 @@ Start-Process msiexec.exe -ArgumentList "/i", $ps7, "/quiet", "/norestart" -Wait
 $gatewayScript = "C:\ProgramData\nullstone\install-gateway.ps1"
 @'
 $ErrorActionPreference = "Stop"
-Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force | Out-Null
+%{ if auto_register ~}
 Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
 Install-Module -Name DataGateway -Force
-Install-DataGateway -AcceptConditions
-%{ if auto_register ~}
+# Install-DataGateway refuses to run without a service-principal login
 $clientSecret = ConvertTo-SecureString $env:NS_CLIENT_SECRET -AsPlainText -Force
 $recoveryKey  = ConvertTo-SecureString $env:NS_RECOVERY_KEY -AsPlainText -Force
 Connect-DataGatewayServiceAccount -ApplicationId "${application_id}" -ClientSecret $clientSecret -Tenant "${tenant_id}"
+Install-DataGateway -AcceptConditions
 Add-DataGatewayCluster -Name "${gateway_name}" -RecoveryKey $recoveryKey%{ if gateway_region != "" } -RegionKey "${gateway_region}"%{ endif }
+%{ else ~}
+# Without a service principal, the DataGateway module cannot install unattended;
+# stage the interactive installer for manual install/registration over RDP.
+Invoke-WebRequest -Uri "https://go.microsoft.com/fwlink/?LinkId=2116849" -OutFile "C:\ProgramData\nullstone\GatewayInstall.exe"
 %{ endif ~}
 '@ | Set-Content -Path $gatewayScript -Encoding UTF8
 
@@ -49,9 +53,14 @@ $env:NS_CLIENT_SECRET = (Get-SECSecretValue -SecretId "${client_secret_id}").Sec
 $env:NS_RECOVERY_KEY = (Get-SECSecretValue -SecretId "${recovery_key_id}").SecretString
 %{ endif ~}
 
-& "C:\Program Files\PowerShell\7\pwsh.exe" -NoProfile -ExecutionPolicy Bypass -File $gatewayScript
+# Transcripts miss native child output and a non-zero exit doesn't throw; capture and check explicitly
+& "C:\Program Files\PowerShell\7\pwsh.exe" -NoProfile -ExecutionPolicy Bypass -File $gatewayScript *> "C:\ProgramData\nullstone\install-gateway.log"
+$gatewayExitCode = $LASTEXITCODE
 $env:NS_CLIENT_SECRET = ""
 $env:NS_RECOVERY_KEY = ""
+if ($gatewayExitCode -ne 0) {
+  throw "install-gateway.ps1 failed with exit code $gatewayExitCode; see C:\ProgramData\nullstone\install-gateway.log"
+}
 
 Stop-Transcript
 </powershell>
