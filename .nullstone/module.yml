@@ -1,0 +1,17 @@
+org_name: nullstone
+name: aws-powerbi-gateway
+friendly_name: PowerBI Gateway
+description: EC2 Windows instance running Microsoft on-premises data gateway that exposes private databases to Power BI
+category: app
+subcategory: server
+provider_types:
+    - aws
+platform: powerbi
+subplatform: ""
+type: powerbi/aws
+appCategories: []
+is_public: true
+tool_name: opentofu
+include:
+    - "user-data.ps1.tpl"
+source_url: https://github.com/nullstone-modules/aws-powerbi-gateway
