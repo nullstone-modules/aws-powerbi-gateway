@@ -4,6 +4,7 @@ friendly_name: PowerBI Gateway
 description: EC2 Windows instance running Microsoft on-premises data gateway that exposes private databases to Power BI
 category: app
 subcategory: server
+app_type: packaged
 provider_types:
     - aws
 platform: powerbi
