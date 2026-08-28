@@ -28,6 +28,8 @@ resource "aws_instance" "this" {
   disable_api_termination     = false
   monitoring                  = false
   user_data                   = local.user_data
+  // user data only runs at first boot; replace the instance when it changes
+  user_data_replace_on_change = true
   tags                        = merge(local.tags, { Name = local.resource_name })
 
   root_block_device {
