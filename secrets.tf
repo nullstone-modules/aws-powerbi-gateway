@@ -2,7 +2,7 @@
 // Secrets (from `var.secrets` and capabilities) are stored in AWS Secrets Manager
 // and loaded by the user-data init script; they are never embedded in user data.
 resource "aws_secretsmanager_secret" "app_secret" {
-  for_each = local.secret_keys
+  for_each = data.ns_env_layout.this.managed_secret_keys
 
   name_prefix = "${local.block_name}/${each.value}/"
   tags        = local.tags
@@ -13,10 +13,10 @@ resource "aws_secretsmanager_secret" "app_secret" {
 }
 
 resource "aws_secretsmanager_secret_version" "app_secret" {
-  for_each = local.secret_keys
+  for_each = data.ns_env_layout.this.managed_secret_keys
 
   secret_id     = aws_secretsmanager_secret.app_secret[each.value].id
-  secret_string = local.all_secrets[each.value]
+  secret_string = data.ns_env_values.this.secrets[each.value]
 
   lifecycle {
     create_before_destroy = true
@@ -77,7 +77,7 @@ locals {
 }
 
 resource "aws_iam_role_policy" "secrets" {
-  count = length(local.secret_keys) > 0 || local.auto_register ? 1 : 0
+  count = length(data.ns_env_layout.this.managed_secret_keys) > 0 || local.auto_register ? 1 : 0
 
   name   = "read-secrets"
   role   = aws_iam_role.this.id
@@ -85,7 +85,7 @@ resource "aws_iam_role_policy" "secrets" {
 }
 
 data "aws_iam_policy_document" "secrets" {
-  count = length(local.secret_keys) > 0 || local.auto_register ? 1 : 0
+  count = length(data.ns_env_layout.this.managed_secret_keys) > 0 || local.auto_register ? 1 : 0
 
   statement {
     sid       = "AllowReadSecrets"
