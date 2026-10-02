@@ -1,7 +1,7 @@
 locals {
   user_data = templatefile("${path.module}/user-data.ps1.tpl", {
-    env_vars   = local.all_env_vars
-    secret_ids = { for key in local.secret_keys : key => aws_secretsmanager_secret.app_secret[key].id }
+    env_vars   = data.ns_env_values.this.env_variables
+    secret_ids = { for key, secret in aws_secretsmanager_secret.app_secret : key => secret.id }
 
     auto_register    = local.auto_register
     application_id   = var.application_id
